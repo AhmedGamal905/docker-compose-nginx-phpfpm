@@ -1,0 +1,55 @@
+version: "3.9"
+networks:
+  app-network:
+    driver: bridge
+volumes:
+  mysql:
+services:
+  app:
+    build:
+      context: ""
+      dockerfile: Dockerfile
+    networks:
+      - app-network
+    container_name: app
+    restart: always
+    working_dir: /var/www/html/
+    volumes:
+      - ./src:/var/www/html/
+  nginx:
+    networks:
+      - app-network
+    image: nginx:latest
+    container_name: programwithgio-nginx
+    restart: always
+    ports:
+      - 8080:80
+    volumes:
+      - ./src:/var/www/html/
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+  db:
+    networks:
+      - app-network
+    container_name: programwithgio-db
+    image: mysql:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: "password"
+      MYSQL_ROOT_HOST: "%"
+      MYSQL_DATABASE: "app"
+      MYSQL_PASSWORD: "password"
+      MYSQL_ALLOW_EMPTY_PASSWORD: 1
+    volumes:
+      - mysql:/var/lib/mysql
+    ports:
+      - 3306:3306
+  phpmyadmin:
+    image: phpmyadmin:latest
+    environment:
+      - PMA_HOST=db
+      - PMA_PORT=3306
+    depends_on:
+      - db
+    networks:
+      - app-network
+    ports:
+      - 8001:80
